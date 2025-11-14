@@ -29,7 +29,6 @@
           <label class="label">背景色：</label>
           <input v-model="options.background" type="color">
         </div>
-
         <div class="form-item">
           <label class="label">前景色：</label>
           <input v-model="options.foreground" type="color">
@@ -37,10 +36,10 @@
         <div class="form-item">
           <label class="label">纠错级别：</label>
           <select v-model="options.level">
-            <option label="最低" value="L"></option>
-            <option label="低" value="M"></option>
-            <option label="高" value="Q"></option>
-            <option label="最高" value="H"></option>
+            <option label="L" value="L"></option>
+            <option label="M" value="M"></option>
+            <option label="Q" value="Q"></option>
+            <option label="H" value="H"></option>
           </select>
         </div>
         <div class="form-item">
