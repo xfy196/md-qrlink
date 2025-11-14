@@ -29,6 +29,7 @@
           <label class="label">背景色：</label>
           <input v-model="options.background" type="color">
         </div>
+
         <div class="form-item">
           <label class="label">前景色：</label>
           <input v-model="options.foreground" type="color">
