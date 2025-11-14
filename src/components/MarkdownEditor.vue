@@ -2,32 +2,35 @@
   <div class="editor-container">
     <!-- 移动端预览切换按钮 -->
     <div class="mobile-tabs">
-      <button 
-        @click="activeTab = 'edit'" 
-        :class="{ active: activeTab === 'edit' }"
-      >编辑</button>
-      <button 
-        @click="activeTab = 'original'" 
-        :class="{ active: activeTab === 'original' }"
-      >原始预览</button>
-      <button 
-        @click="activeTab = 'transformed'" 
-        :class="{ active: activeTab === 'transformed' }"
-      >转换预览</button>
+      <button
+          @click="activeTab = 'edit'"
+          :class="{ active: activeTab === 'edit' }"
+      >编辑
+      </button>
+      <button
+          @click="activeTab = 'original'"
+          :class="{ active: activeTab === 'original' }"
+      >原始预览
+      </button>
+      <button
+          @click="activeTab = 'transformed'"
+          :class="{ active: activeTab === 'transformed' }"
+      >转换预览
+      </button>
     </div>
-    
+
     <div class="editor-content">
       <!-- 编辑面板 -->
       <div class="editor-panel" :class="{ 'mobile-hidden': isMobile && activeTab !== 'edit' }">
         <div class="panel-header">编辑</div>
         <textarea
-          v-model="markdownContent"
-          class="markdown-input"
-          placeholder="请输入Markdown内容..."
-          @input="updateContent"
+            v-model="markdownContent"
+            class="markdown-input"
+            placeholder="请输入Markdown内容..."
+            @input="updateContent"
         ></textarea>
       </div>
-      
+
       <!-- 原始预览面板 -->
       <div class="preview-panel" :class="{ 'mobile-hidden': isMobile && activeTab !== 'original' }">
         <div class="panel-header">原始预览</div>
@@ -35,7 +38,7 @@
           <div v-html="originalHtml"></div>
         </div>
       </div>
-      
+
       <!-- 转换预览面板 -->
       <div class="preview-panel" :class="{ 'mobile-hidden': isMobile && activeTab !== 'transformed' }">
         <div class="panel-header">转换预览</div>
@@ -48,9 +51,11 @@
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted, watch, nextTick, h, render } from 'vue';
-import { parseMarkdown, renderTransformedMarkdown, getTransformedContentForCopy } from '../utils/markdownParser';
+import {ref, onMounted, onUnmounted, watch, nextTick, h, render} from 'vue';
+import {parseMarkdown, renderTransformedMarkdown, getTransformedContentForCopy} from '../utils/markdownParser';
 import QRCodeGenerator from './QRCodeGenerator.vue';
+import {useQrCodeStore} from "../store/qrcode.js";
+import {storeToRefs} from "pinia";
 
 export default {
   name: 'MarkdownEditor',
@@ -61,16 +66,16 @@ export default {
     initialContent: {
       type: String,
       default: ''
-    }
+    },
   },
-  setup(props, { emit }) {
+  setup(props, {emit}) {
     const markdownContent = ref(props.initialContent);
     const originalHtml = ref('');
     const transformedHtml = ref('');
     const transformedContent = ref(null);
     const isMobile = ref(false);
     const activeTab = ref('edit'); // 默认显示编辑面板
-    
+
     // 检测是否为移动设备
     const checkMobile = () => {
       isMobile.value = window.innerWidth <= 768;
@@ -79,66 +84,80 @@ export default {
         activeTab.value = 'edit';
       }
     };
-    
+
     const updateContent = async () => {
       originalHtml.value = parseMarkdown(markdownContent.value);
       transformedHtml.value = await renderTransformedMarkdown(markdownContent.value);
       emit('update:content', markdownContent.value);
     };
-    
+
+    const refreshContent = () => {
+      originalHtml.value = ''
+      transformedHtml.value = ''
+      updateContent()
+    }
+
     const insertQRCodes = () => {
       if (!transformedContent.value) return;
-      
+
       const qrcodePlaceholders = transformedContent.value.querySelectorAll('.qrcode-placeholder');
-      
+      const qrcodeStore = useQrCodeStore()
+      const {options} = storeToRefs(qrcodeStore)
       qrcodePlaceholders.forEach(placeholder => {
         const url = placeholder.getAttribute('data-url');
         if (!url) return;
-        
         // 创建QRCode组件实例
-        const QRCodeComponent = h(QRCodeGenerator, { url, size: 100 });
+        const QRCodeComponent = h(QRCodeGenerator, {
+          url,
+          size: options.value.size,
+          background: options.value.background,
+          foreground: options.value.foreground,
+          level: options.value.level,
+          renderAs: options.value.renderAs
+        });
         const container = document.createElement('div');
         placeholder.parentNode.insertBefore(container, placeholder);
-        
+
         // 渲染组件到容器
         render(QRCodeComponent, container);
         placeholder.remove();
       });
     };
-    
+
     // 监听transformedHtml变化，确保二维码正确显示
     watch(transformedHtml, () => {
       nextTick(() => {
         insertQRCodes();
       });
     });
-    
+
     watch(() => props.initialContent, async (newVal) => {
       markdownContent.value = newVal;
       await updateContent();
     });
-    
+
     // 监听窗口大小变化
     const handleResize = () => {
       checkMobile();
     };
-    
+
     onMounted(async () => {
       await updateContent();
       checkMobile(); // 初始检测设备类型
       window.addEventListener('resize', handleResize);
     });
-    
+
     // 组件卸载时移除事件监听
     onUnmounted(() => {
       window.removeEventListener('resize', handleResize);
     });
-    
+
     return {
       markdownContent,
       originalHtml,
       transformedHtml,
       transformedContent,
+      refreshContent,
       updateContent,
       isMobile,
       activeTab
@@ -312,39 +331,39 @@ export default {
     flex-wrap: wrap;
     gap: 5px;
   }
-  
+
   .editor-content {
     flex-direction: column;
   }
-  
+
   .editor-panel,
   .preview-panel {
     flex: none;
     width: 100%;
     height: auto;
   }
-  
+
   .editor-panel,
   .preview-panel {
     height: calc(100vh - 180px);
   }
-  
+
   .panel-header {
     padding: 6px 10px;
     font-size: 0.9rem;
   }
-  
+
   .markdown-input,
   .preview-container {
     padding: 10px;
     font-size: 12px;
   }
-  
+
   .transformed :deep(.link-container) {
     padding: 8px;
     margin: 8px 0;
   }
-  
+
   .transformed img,
   .transformed .qrcode-container {
     max-width: 80px;

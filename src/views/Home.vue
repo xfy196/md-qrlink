@@ -3,39 +3,79 @@
     <a rel="noopener noreferrer" href="https://github.com/atqq/md-qrlink" target="_blank" class="github-link">
       <span>GitHub</span>
       <svg height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" data-view-component="true">
-        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+        <path
+            d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
       </svg>
     </a>
     <h1>Markdown标题外链转二维码</h1>
     <p class="description">将Markdown中带超链接的标题提取出来，放在标题下方，并在左侧生成对应的二维码图片</p>
     <p class="description">
-      搭配 <a href="https://github.com/doocs/md?tab=readme-ov-file" target="_blank" rel="noopener noreferrer">微信 Markdown 编辑器</a>（<a href="https://md.doocs.org" target="_blank">md.doocs.org</a>） 使用效果更加
+      搭配 <a href="https://github.com/doocs/md?tab=readme-ov-file" target="_blank" rel="noopener noreferrer">微信
+      Markdown 编辑器</a>（<a href="https://md.doocs.org" target="_blank">md.doocs.org</a>） 使用效果更加
     </p>
     <div class="actions">
       <button @click="loadSample">加载示例</button>
       <button @click="clearContent">清空内容</button>
       <button @click="copyTransformed">复制转换后内容</button>
+      <button @click="handleSetQrCode">设置二维码</button>
     </div>
-    
+    <Modal v-model="showModal"
+           title="设置二维码样式"
+           @confirm="handleQrCodeConfirm"
+           @cancel="handleQrCodeCancel"
+    >
+      <form class="form">
+        <div class="form-item">
+          <label class="label">背景色：</label>
+          <input v-model="options.background" type="color">
+        </div>
+        <div class="form-item">
+          <label class="label">前景色：</label>
+          <input v-model="options.foreground" type="color">
+        </div>
+        <div class="form-item">
+          <label class="label">纠错级别：</label>
+          <select v-model="options.level">
+            <option label="最低" value="L"></option>
+            <option label="低" value="M"></option>
+            <option label="高" value="Q"></option>
+            <option label="最高" value="H"></option>
+          </select>
+        </div>
+        <div class="form-item">
+          <label class="label">图片模式：</label>
+          <select v-model="options.renderAs">
+            <option label="svg" value="svg"></option>
+            <option label="canvas" value="canvas"></option>
+          </select>
+        </div>
+      </form>
+    </Modal>
     <div class="editor-wrapper">
-      <MarkdownEditor 
-        :initial-content="markdownContent" 
-        @update:content="markdownContent = $event" 
-        ref="editor"
+      <MarkdownEditor
+          :initial-content="markdownContent"
+          v-model:content="markdownContent"
+          ref="editor"
       />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import {ref, watch} from 'vue';
 import MarkdownEditor from '../components/MarkdownEditor.vue';
-import { getTransformedContentForCopy } from '../utils/markdownParser';
+import {getTransformedContentForCopy} from '../utils/markdownParser';
+import Modal from "../components/Modal.vue"
+import {useQrCodeStore} from "../store/qrcode.js";
+import {storeToRefs} from "pinia";
 
 // 从localStorage读取缓存的内容，如果没有则使用空字符串
 const savedContent = localStorage.getItem('markdownContent') || '';
 const markdownContent = ref(savedContent);
 const editor = ref(null);
+const showModal = ref(false);
+const qrcodeStore = useQrCodeStore()
+const {options} = storeToRefs(qrcodeStore)
 
 const sampleMarkdown = `# [Vue.js官网](https://vuejs.org/)
 
@@ -78,6 +118,20 @@ const copyTransformed = async () => {
     alert('复制失败，请手动复制。');
   }
 };
+/**
+ * 设置二维码样式
+ */
+const handleSetQrCode = () => {
+  showModal.value = true
+}
+const handleQrCodeConfirm = async () => {
+  if (editor.value) {
+    editor.value.refreshContent()
+    showModal.value = false
+  }
+}
+const handleQrCodeCancel = () => {
+}
 </script>
 
 <style scoped>
@@ -89,6 +143,7 @@ const copyTransformed = async () => {
   align-items: center;
   gap: 10px;
 }
+
 .home-container {
   width: 100%;
   max-width: 1600px;
@@ -137,22 +192,23 @@ const copyTransformed = async () => {
   .home-container {
     padding: 10px;
   }
-  
+
   h1 {
     font-size: 1.5rem;
   }
-  
+
   .description {
     font-size: 0.9rem;
   }
-  
+
   .actions button {
     padding: 6px 12px;
     font-size: 0.8rem;
   }
-  
+
   .editor-wrapper {
     height: 85vh;
   }
+
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
   <div class="qrcode-container">
-    <qrcode-vue :value="url" :size="size" level="H" render-as="svg" />
+    <qrcode-vue :value="url" :size="size" :background="background" :foreground="foreground" :level="level"
+                :render-as="renderAs"/>
   </div>
 </template>
 
@@ -20,6 +21,24 @@ export default {
     size: {
       type: Number,
       default: 100
+    },
+    background: {
+      type: String,
+      default: "#ffffff"
+    },
+    foreground: {
+      type: String,
+      default: "#000000"
+    },
+    // 'L' | 'M' | 'Q' | 'H';
+    level: {
+      type: String,
+      default: "M"
+    },
+    // 'canvas' | 'svg'
+    renderAs: {
+      type: String,
+      default: "svg"
     }
   }
 };
