@@ -24,30 +24,44 @@
            @confirm="handleQrCodeConfirm"
            @cancel="handleQrCodeCancel"
     >
-      <form class="form">
-        <div class="form-item">
-          <label class="label">背景色：</label>
-          <input v-model="options.background" type="color">
+      <form class="qr-style-form">
+        <div class="form-heading">
+          <h4>主题参数</h4>
+          <p>调整颜色与绘制模式，打造与编辑器一致的科技感视觉。</p>
         </div>
-        <div class="form-item">
-          <label class="label">前景色：</label>
-          <input v-model="options.foreground" type="color">
-        </div>
-        <div class="form-item">
-          <label class="label">纠错级别：</label>
-          <select v-model="options.level">
-            <option label="L" value="L"></option>
-            <option label="M" value="M"></option>
-            <option label="Q" value="Q"></option>
-            <option label="H" value="H"></option>
-          </select>
-        </div>
-        <div class="form-item">
-          <label class="label">图片模式：</label>
-          <select v-model="options.renderAs">
-            <option label="svg" value="svg"></option>
-            <option label="canvas" value="canvas"></option>
-          </select>
+        <div class="form-grid">
+          <div class="form-item">
+            <label class="label">背景色</label>
+            <div class="control">
+              <input v-model="options.background" type="color" class="form-control color-picker">
+              <span class="value-chip">{{ options.background }}</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="label">前景色</label>
+            <div class="control">
+              <input v-model="options.foreground" type="color" class="form-control color-picker">
+              <span class="value-chip">{{ options.foreground }}</span>
+            </div>
+          </div>
+          <div class="form-item">
+            <label class="label">纠错级别</label>
+            <select v-model="options.level" class="form-control">
+              <option label="L" value="L"></option>
+              <option label="M" value="M"></option>
+              <option label="Q" value="Q"></option>
+              <option label="H" value="H"></option>
+            </select>
+            <p class="form-tip">级别越高容错越强，但二维码密度更大。</p>
+          </div>
+          <div class="form-item">
+            <label class="label">图片模式</label>
+            <select v-model="options.renderAs" class="form-control">
+              <option label="SVG" value="svg"></option>
+              <option label="Canvas" value="canvas"></option>
+            </select>
+            <p class="form-tip">SVG 便于导出高清矢量，Canvas 性能更优。</p>
+          </div>
         </div>
       </form>
     </Modal>
@@ -187,6 +201,100 @@ const handleQrCodeCancel = () => {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
+.qr-style-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  color: #213547;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.form-heading h4 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+.form-heading p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f7f7fb;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.label {
+  font-size: 0.95rem;
+  color: #111827;
+  letter-spacing: 0.2px;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #fff;
+  color: #1f2937;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: rgba(100, 108, 255, 0.8);
+  box-shadow: 0 0 0 3px rgba(100, 108, 255, 0.2);
+}
+
+.color-picker {
+  width: 56px;
+  height: 40px;
+  padding: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: #fff;
+}
+
+.value-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.form-tip {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #6b7280;
+}
+
 /* 移动端适配 */
 @media (max-width: 768px) {
   .home-container {
@@ -208,6 +316,14 @@ const handleQrCodeCancel = () => {
 
   .editor-wrapper {
     height: 85vh;
+  }
+
+  .qr-style-form {
+    padding: 16px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
   }
 
 }
