@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "markdown-it": "^14.1.0",
+    "mime": "^4.1.0",
     "pinia": "^3.0.4",
     "pinia-plugin-persistedstate": "^4.7.1",
     "qrcode": "^1.5.4",
