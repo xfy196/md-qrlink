@@ -19,14 +19,24 @@
       <button @click="clearContent">清空内容</button>
       <button @click="copyTransformed">复制转换后内容</button>
       <button @click="handleSetQrCode">设置二维码</button>
+      <button @click="handleOpenParseInputModal">远程解析</button>
       <button @click="handleDownloadFile">下载转换后文件</button>
     </div>
+    <Modal v-model="showParseInputModal" :confirm-loading="confirmLoading" @confirm="handleLoadRemoteMarkdown" @cancel="handleCancelLoadRemoteMarkdown"
+      title="远程地址">
+      <form action="qr-style-form">
+        <div class="form-grid">
+          <div class="form-item">
+            <label class="label">远程地址</label>
+            <div class="control">
+              <input v-model="remoteUrl" placeholder="请输入远程地址" type="text" class="form-control">
+            </div>
+          </div>
+        </div>
+      </form>
+    </Modal>
     <Modal v-model="showModal" title="设置二维码样式" @confirm="handleQrCodeConfirm" @cancel="handleQrCodeCancel">
       <form class="qr-style-form">
-        <div class="form-heading">
-          <h4>主题参数</h4>
-          <p>调整颜色与绘制模式，打造与编辑器一致的科技感视觉。</p>
-        </div>
         <div class="form-grid">
           <div class="form-item">
             <label class="label">背景色</label>
@@ -70,7 +80,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import {  ref, watch } from 'vue';
 import MarkdownEditor from '../components/MarkdownEditor.vue';
 import { getTransformedContentForCopy } from '../utils/markdownParser';
 import Modal from "../components/Modal.vue"
@@ -83,6 +93,9 @@ const savedContent = localStorage.getItem('markdownContent') || '';
 const markdownContent = ref(savedContent);
 const editor = ref(null);
 const showModal = ref(false);
+const showParseInputModal = ref(false)
+const remoteUrl = ref('')
+const confirmLoading = ref(false)
 const qrcodeStore = useQrCodeStore()
 const { options } = storeToRefs(qrcodeStore)
 
@@ -139,15 +152,41 @@ const handleQrCodeConfirm = async () => {
     showModal.value = false
   }
 }
+// 关闭二维码样式设置弹窗
 const handleQrCodeCancel = () => {
 }
+// 下载转换后文件
 const handleDownloadFile = async () => {
   const content = await getTransformedContentForCopy(markdownContent.value)
   downloadTextFile(content, "transformed", "md")
 }
+// 打开远程解析弹窗
+const handleOpenParseInputModal = () => {
+  showParseInputModal.value = true
+}
+// 加载远程Markdown
+const handleLoadRemoteMarkdown = async () => {
+  try {
+    confirmLoading.value = true
+    const response = await fetch(`/api/markdown/parse?url=${remoteUrl.value}`)
+    const data = await response.json()
+    if (data.code === 200) {
+      markdownContent.value = data.data.markdown
+    }
+    showParseInputModal.value = false
+    confirmLoading.value = false
+    remoteUrl.value = ''
+  } catch (error) {
+  }
+}
+// 关闭远程解析弹窗
+const handleCancelLoadRemoteMarkdown = () => {
+  remoteUrl.value = ''
+  confirmLoading.value = false
+}
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .github-link {
   position: absolute;
   top: 10px;

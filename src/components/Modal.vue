@@ -31,8 +31,22 @@
           <!-- 底部，使用具名插槽并提供默认内容 -->
           <div class="modal-footer">
             <slot name="footer">
-              <button class="btn-cancel" @click="closeModal">取消</button>
-              <button class="btn-confirm" @click="confirmModal">确定</button>
+              <button
+                  class="btn-cancel"
+                  @click="closeModal"
+                  :disabled="cancelLoading"
+              >
+                <span v-if="cancelLoading" class="btn-spinner"></span>
+                <span>取消</span>
+              </button>
+              <button
+                  class="btn-confirm"
+                  @click="confirmModal"
+                  :disabled="confirmLoading"
+              >
+                <span v-if="confirmLoading" class="btn-spinner light"></span>
+                <span>确定</span>
+              </button>
             </slot>
           </div>
         </div>
@@ -49,6 +63,8 @@ interface Props {
   title?: string;        // 模态框标题
   width?: string;        // 模态框宽度，如 '600px' 或 '50%'
   closeOnClickOverlay?: boolean; // 点击遮罩层是否可关闭，默认为 true
+  confirmLoading?: boolean; // 确认按钮 loading 状态
+  cancelLoading?: boolean;  // 取消按钮 loading 状态
 }
 
 // 定义抛出的事件
@@ -62,6 +78,8 @@ interface Emits {
 const props = withDefaults(defineProps<Props>(), {
   title: '提示',
   width: '520px',
+  cancelLoading: false,
+  confirmLoading: false,
   closeOnClickOverlay: true
 });
 
@@ -125,7 +143,7 @@ const handleOverlayClick = () => {
 // 可以在 watch 中监听 modelValue 的变化，来添加/移除 keydown 事件监听
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 :global(:root) {
   --modal-surface: #ffffff;
   --modal-muted: #f5f5f7;
@@ -255,6 +273,9 @@ const handleOverlayClick = () => {
   font-size: 0.95rem;
   font-weight: 500;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .btn-cancel {
@@ -273,8 +294,37 @@ const handleOverlayClick = () => {
   color: #fff;
   border: none;
   box-shadow: 0 10px 20px rgba(83, 91, 242, 0.25);
+  
+
+}
+.btn-cancel:disabled,
+.btn-confirm:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
 }
 
+.btn-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(100, 108, 255, 0.25);
+  border-top-color: var(--modal-accent);
+  animation: modal-btn-spin 0.7s linear infinite;
+}
+
+.btn-spinner.light {
+  border-color: rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+}
+
+@keyframes modal-btn-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
 .btn-confirm:hover {
   background: var(--modal-accent-strong);
 }
