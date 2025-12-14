@@ -168,7 +168,7 @@ const handleOpenParseInputModal = () => {
 const handleLoadRemoteMarkdown = async () => {
   try {
     confirmLoading.value = true
-    const response = await fetch(`/api/markdown/parse?url=${remoteUrl.value}`)
+    const response = await fetch(`${import.meta.env.VITE_API_TARGET}/api/markdown/parse?url=${remoteUrl.value}`)
     const data = await response.json()
     if (data.code === 200) {
       markdownContent.value = data.data.markdown

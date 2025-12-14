@@ -10,12 +10,4 @@ export default defineConfig({
   // 便于 掘金 AI Coding 使用
   plugins: isJuejin ? [vue(), viteSingleFile()] : [vue()],
   base: isGithubActions ? '/md-qrlink/' : '/',
-  server: {
-    proxy: {
-      "/api": {
-        target: "https://xapi.xxytime.top",
-        changeOrigin: true,
-      }
-    }
-  }
 })
